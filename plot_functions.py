@@ -3,7 +3,7 @@ import pickle
 from enigmatoolbox.utils.parcellation import parcel_to_surface, surface_to_parcel
 from enigmatoolbox.plotting import plot_cortical
 
-with open('plot_indeces_organization', 'rb') as file:
+with open('data/plot_indeces_organization', 'rb') as file:
     new_indices = pickle.load(file)
 
 def reorganize_roi_gradient(original_data, new_indices=new_indices):

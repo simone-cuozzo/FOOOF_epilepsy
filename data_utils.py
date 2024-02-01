@@ -47,21 +47,6 @@ def permutation_ttest(matrix_EPI, matrix_HC, num_permutations = 5000, num_variab
         permuted_p_values[variable_index] = perm_p_value
     return actual_t_stats, permuted_p_values
 
-'''def permutation_test(matrix_HC, matrix_EPI, n_permutations = 10000):
-  permutations = []
-  # stacking the 2 matrices to obtain a new matrix [n_subject, ROIs]
-  stacked_mat = np.vstack((matrix_HC, matrix_EPI))
-  for i in tqdm(range(n_permutations)):
-    # shuffling the subjects vectors order to obtain 2 new permuted  
-    # matrices with same shape than the original
-    shuffled_indices = np.random.permutation(stacked_mat.shape[0])
-    permuted_stacked = stacked_mat[shuffled_indices]
-    permuted_matrix_HC = permuted_stacked[:np.shape(matrix_HC)[0], :]
-    permuted_matrix_EPI = permuted_stacked[np.shape(matrix_HC)[0]:, :]
-    diff = np.mean(permuted_matrix_EPI) - np.mean(permuted_matrix_HC)
-    permutations.append(diff)
-  return permutations'''
-
 
 def time_series_concat(data_mat, concat_data = list):
   for sub in data_mat:
@@ -178,58 +163,3 @@ def create_plot_mask(corr_values, p_values, alpha):
   significant_rois = (np.array(p_values) <= alpha).astype(int)
   corr_mask = significant_rois * corr_values
   return corr_mask
-
-def plot_cortical2(array_name=None, surface_name='fsa5', color_bar=False,
-                  color_range=None, label_text=None,
-                  cmap='RdBu_r', nan_color=(1, 1, 1, 0), zoom=1,
-                  background=(1, 1, 1), size=(400, 400), interactive=True,
-                  embed_nb=False, screenshot=False, filename=None,
-                  scale=(1, 1), transparent_bg=True, **kwargs):
-    
-    if color_bar is True:
-        color_bar = 'right'
-
-    if surface_name == "fsa5":
-        surf_lh, surf_rh = enigmatoolbox.datasets.load_fsa5()
-    elif surface_name == "fsa":
-        surf_lh, surf_rh = enigmatoolbox.datasets.load_fsa()
-    elif surface_name == "conte69":
-        surf_lh, surf_rh = enigmatoolbox.datasets.load_conte69()
-
-    surfs = {'lh': surf_lh, 'rh': surf_rh}
-    layout = [['lh', 'lh'], ['rh', 'rh']]
-    view = [['lateral', 'medial'], ['lateral', 'medial']]
-
-    if isinstance(array_name, pd.Series):
-        array_name = array_name.to_numpy()
-
-    if isinstance(array_name, np.ndarray):
-        if array_name.ndim == 2:
-            array_name = [a for a in array_name]
-        elif array_name.ndim == 1:
-            array_name = [array_name]
-
-    if isinstance(array_name, list):
-        layout = [layout] * len(array_name)
-        array_name2 = []
-        n_pts_lh = surf_lh.n_points
-        for an in array_name:
-            if isinstance(an, np.ndarray):
-                name = surf_lh.append_array(an[:n_pts_lh], at='p')
-                surf_rh.append_array(an[n_pts_lh:], name=name, at='p')
-                array_name2.append(name)
-            else:
-                array_name2.append(an)
-        array_name = np.asarray(array_name2)[:, None]
-
-    if isinstance(cmap, list):
-        cmap = np.asarray(cmap)[:, None]
-
-    kwds = {'view': view, 'share': 'r'}
-    kwds.update(kwargs)
-    return enigmatoolbox.plotting.surface_plotting.plot_surf(surfs, layout, array_name=array_name, color_bar=color_bar,
-                     color_range=color_range, label_text=label_text, cmap=cmap,
-                     nan_color=nan_color, zoom=zoom, background=background,
-                     size=size, interactive=interactive, embed_nb=embed_nb,
-                     screenshot=screenshot, filename=filename, scale=scale,
-                     transparent_bg=transparent_bg, **kwds)
