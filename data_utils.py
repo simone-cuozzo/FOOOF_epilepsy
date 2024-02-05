@@ -3,9 +3,6 @@ import scipy
 from fooof import FOOOF
 import math
 from tqdm import tqdm
-from brainspace.gradient import GradientMaps
-import enigmatoolbox
-from pyentrp import entropy as ent
 from mne.stats import fdr_correction
 import pandas as pd
 from scipy.stats import ttest_ind
