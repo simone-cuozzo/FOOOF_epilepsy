@@ -1,7 +1,5 @@
 import numpy as  np
 import pickle
-from enigmatoolbox.utils.parcellation import parcel_to_surface, surface_to_parcel
-from enigmatoolbox.plotting import plot_cortical
 
 with open('data/plot_indeces_organization', 'rb') as file:
     new_indices = pickle.load(file)
