@@ -11,9 +11,27 @@ import pandas as pd
 from scipy.stats import ttest_ind
 from tqdm import tqdm
 
-
+##########################################################################################
 def permutation_ttest(matrix_EPI, matrix_HC, num_permutations = 5000, num_variables = 68):
-# Initialize arrays to store results
+    ''' 
+    Perform a permutation t-test between two matrices (matrix_EPI, matrix_HC) for n permutations
+
+    Arguments
+    ---------
+      matrix_EPI, matrix_HC: a list or an array. 
+            The arrays must have the same first or second dimension of size num_variables
+      num_permutations: an int.
+            Number of permutations for the t-test
+      num_variables: an int. 
+            Number of variables on which the t-test is performed, that is the number of cortical parcels in the Desikan-Killiany atlas
+    Returns
+    -------
+      actual_t_stats : a list.
+        The calculated t-statistic from the 2 original matrices 
+      permuted_p_values : a list.
+        The p-value obtained from the permutations
+
+    '''
     if np.shape(matrix_EPI)[1] != num_variables:
         matrix_EPI = np.transpose(matrix_EPI)
         if np.shape(matrix_EPI)[1] != num_variables:
@@ -46,9 +64,10 @@ def permutation_ttest(matrix_EPI, matrix_HC, num_permutations = 5000, num_variab
         perm_p_value = (np.abs(permuted_t_stats) >= np.abs(actual_t_stat)).mean()
         permuted_p_values[variable_index] = perm_p_value
     return actual_t_stats, permuted_p_values
+############################################################################################
 
-
-def time_series_concat(data_mat, concat_data = list):
+############################################################################################
+'''def time_series_concat(data_mat, concat_data = list):
   for sub in data_mat:
     shape1 = np.shape(sub[0])[1]
     shape2 = np.shape(sub[1])[1]
@@ -56,9 +75,25 @@ def time_series_concat(data_mat, concat_data = list):
     shape2_limit = desired_len - shape1
     time_series = np.concatenate((sub[0], sub[1][:, :shape2_limit]), axis=1)
     limited_time_series = time_series
-    concat_data.append(limited_time_series)
+    concat_data.append(limited_time_series)'''
+############################################################################################
 
+############################################################################################
 def fooof_exponent_compute(data,  freq_range = list):
+  '''
+  calculate the power spectra of a time series matrix and use the fooof library to calculate the FOOOF exponents 
+
+  Arguments
+  ---------
+    data: a list or an array.
+      matrix of shape (n_subject x n_parcels) containing the time serie of each parcel of the Desikan-Killiany atlas for each subject
+    freq_range: a list.
+      contains the lower bound and the upper bound of the frequency range on which the FOOOF is calculated
+  Returns
+  -------
+    fooof_dict: a dict.
+      a dictionary that contains the subject ids as keys and the fooof exponents as values
+  '''
   fooof_dict = {}
   for idx,sub in enumerate(data):
     fooof_exponent = []
@@ -72,8 +107,22 @@ def fooof_exponent_compute(data,  freq_range = list):
     fooof_dict[dict_key] = fooof_exponent
   print('FOOOF exponents calculation completed')
   return(fooof_dict)
+############################################################################################
 
+############################################################################################
 def power_spectrum_and_aperiodic(data):
+  '''
+  Calculate the power spectra of a time series matrix with Welch alghorithm 
+
+  Arguments
+  ---------
+    data: an array or list.
+      matrix containing the subjects time series
+  Returns
+  -------
+    power_spec_dict: a dict of tuples.
+      a dict containing the frequencies and power for each subject
+  '''
   power_spec_dict = {}
   for idx,sub in enumerate(data):
     frequencies = []
@@ -81,13 +130,27 @@ def power_spectrum_and_aperiodic(data):
     dict_key = 'sub' + str(idx+1)
     for i in range(len(sub)):
       f, Pxx_den = scipy.signal.welch(sub[i], fs=250, nperseg=1250, scaling='density')
-      #fooof_offset.append(fm.aperiodic_params_[0])
       frequencies.append(f)
       power_spectrum.append(Pxx_den)
     power_spec_dict[dict_key] = (frequencies, power_spectrum)
   return power_spec_dict
+############################################################################################
 
+############################################################################################
 def nan_sanity_check(data_dict, group_name = str):
+  '''
+  For each subject in a dict check if a NaN value is present due to an error after FOOOF calculation
+
+  Arguments
+  ---------
+    data_dict: a dict.
+      a dict containing the parcels' FOOOF exponent for each group subject
+    group_name: a string.
+      the name of the group on which the function is operating
+  Returns
+  -------
+    a printed string.
+  '''
   for key, roi in data_dict.items():
     for idx, value in enumerate(roi):
       # Check if the value is NaN
@@ -97,21 +160,24 @@ def nan_sanity_check(data_dict, group_name = str):
           print(f"The value at key '{key}' and roi #{idx} in {group_name} group is NaN.")
   if nan_check == False:
       print(f"No Nan values present in group {group_name}") 
-
-def sample_entropy_dict(data):
-  ent_dict = {}
-  for idx,sub in tqdm(enumerate(data)):
-    samp_ent = []
-    dict_key = 'sub' + str(idx+1)
-    for i in range(len(sub)):
-      std = np.std(sub[i])
-      sample_entropy = ent.sample_entropy(sub[i], 4, 0.2 * std)
-      samp_ent.append(sample_entropy)
-    ent_dict[dict_key] = samp_ent
-  print('sample entropy dict created')
-  return(ent_dict)
-
+############################################################################################
+      
+'''
+############################################################################################
 def p_value_epi_vs_hc(epi_data, hc_data, alpha = 0.05, fdr=False):
+  
+  Calculate the ROI-wise p-value between EPI group subjects and HC subjects
+
+  Arguments
+  ---------
+    epi_data: a dict.
+      a dict containing the parcels' FOOOF exponent for each group subject
+    group_name: a string.
+      the name of the group on which the function is operating
+  Returns
+  -------
+    a printed string.
+  
   # Function to calculate the ROI-wise p-value between subject an control groups 
   epi_data = np.array(epi_data)
   hc_data = np.array(hc_data)
@@ -133,8 +199,38 @@ def p_value_epi_vs_hc(epi_data, hc_data, alpha = 0.05, fdr=False):
     roi_significant_p = (p_values <= alpha).astype(int)
     t_test_results_mask = t_values * roi_significant_p
   return t_values, p_values, t_test_results_mask
+############################################################################################
+'''
 
+############################################################################################
 def calculate_correlation(fooof_mat, score_vec, type = str, alpha = 0.01, fdr = False):
+  '''
+  Calculate the correlation between FOOOF exponents and clinical/neuropsychological scores
+
+  Arguments
+  ---------
+    fooof_mat: an array or list.
+      a matrix that contains the FOOOF exponents
+    score_vec: an array or list.
+      a vector that contains the clinical variable values or neuropsychological scores
+    type: a string.
+      specifies the type of correlation performed 
+    group_name: a string.
+      the name of the group on which the function is operating
+    alpha: a float.
+      the threshold for the p-values. Default is 0.01
+    fdr: a boolean.
+      defines if Roi-wise FDR correction is applied
+  Returns
+  -------
+    correlation_vec: a list.
+      contains Pearson/Spearman correlation coefficients
+    p_values_vec/p_values_vec_corrected: a list.
+      contains the p-values 
+    corr_mask: a list.
+      a mask that contains the correlation value if parcel p-value <= alpha
+      and 0 if parcel p-value > alpha
+    '''
   p_values_vec = []
   correlation_vec = []
   fooof_mat, score_vec = np.array(fooof_mat), np.array(score_vec)
@@ -157,9 +253,28 @@ def calculate_correlation(fooof_mat, score_vec, type = str, alpha = 0.01, fdr = 
     significant_rois = (np.array(p_values_vec) <= alpha).astype(int)
     corr_mask = significant_rois * correlation_vec
     return correlation_vec, p_values_vec, corr_mask
+############################################################################################
 
-
+############################################################################################
 def create_plot_mask(corr_values, p_values, alpha):
+  '''
+  Create the cortical masks used for brain plotting
+
+  Arguments
+  ---------
+    corr_values: a list.
+      correlation values list
+    p_values: a list.
+      p-values list
+    alpha: a float.
+      threshold for p-values
+  Returns
+  -------
+    corr_mask: a list.
+      a mask that contains the correlation value if p-value <= alpha
+      and 0 if p-value > alpha
+  '''
   significant_rois = (np.array(p_values) <= alpha).astype(int)
   corr_mask = significant_rois * corr_values
   return corr_mask
+############################################################################################
